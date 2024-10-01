@@ -1,14 +1,11 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import urllib.parse  # For parsing query strings
-import json  # For parsing JSON data in POST requests
-import application
-from application import Application
+from core.Application import Application
 
 
 # Define a request handler class
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def _handle_request(self):
-        Application.run(self)
+        Application(self).run()
 
     # Override do_* methods to point to _handle_request
     def do_GET(self):
