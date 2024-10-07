@@ -2,6 +2,7 @@ import email
 import urllib.parse
 from http.server import BaseHTTPRequestHandler
 from typing import Dict
+from urllib.parse import ParseResult
 
 from core.request.RequestInterface import RequestInterface
 
@@ -11,21 +12,24 @@ class Request(RequestInterface):
     _method: str
     _headers: email.message.Message
     _host: str
-    _path: str
+    _url: ParseResult
+    _body: str
 
     def __init__(self, request_handler: BaseHTTPRequestHandler):
         self.set_method(request_handler.command)
         headers = request_handler.headers
         self.set_headers(headers)
         self.set_host(headers.get('Host'))
-        # path = request_handler.path
-        # parsed_path = urllib.parse.urlparse(path)
-        # query_params = urllib.parse.parse_qs(parsed_path.query)
-        # request_version = request_handler.request_version
-        #
-        # content_length = int(headers['Content-Length'])
-        # body = request_handler.rfile.read(content_length)
-        # content = body.decode('utf-8')
+        self.set_url(urllib.parse.urlparse(request_handler.path))
+        # parse body content
+        content_length = int(headers['Content-Length'])
+        body = request_handler.rfile.read(content_length)
+        content = body.decode('utf-8')
+        self.set_body(content)
+
+        print(f'Url: {self.url()}')
+        print(f'Content: {self.body()}')
+
 
     def method(self):
         return self._method
@@ -51,9 +55,15 @@ class Request(RequestInterface):
     def set_header(self, key: str, value: str):
         self._headers[key] = value
 
-    def path(self):
-        raise NotImplementedError
+    def url(self):
+        return self._url
 
-    def set_path(self, value: str):
-        raise NotImplementedError
+    def set_url(self, value: ParseResult):
+        self._url = value
+
+    def body(self):
+        return self._body
+
+    def set_body(self, value: str):
+        self._body = value
 

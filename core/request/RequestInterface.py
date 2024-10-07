@@ -1,6 +1,7 @@
 import email
 from abc import ABC, abstractmethod
 from typing import Dict
+from urllib.parse import ParseResult
 
 
 class RequestInterface(ABC):
@@ -38,9 +39,18 @@ class RequestInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def path(self):
+    def url(self):
         raise NotImplementedError
 
     @abstractmethod
-    def set_path(self, value: str):
+    def set_url(self, value: ParseResult):
         raise NotImplementedError
+
+    @abstractmethod
+    def body(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_body(self, value: str):
+        raise NotImplementedError
+

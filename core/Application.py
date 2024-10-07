@@ -5,16 +5,20 @@ import urllib.parse
 
 from core.request.Request import Request
 from core.request.RequestInterface import RequestInterface
+from core.routing.Router import Router
+from core.routing.RouterInterface import RouterInterface
 
 
 class Application:
 
     __handler: BaseHTTPRequestHandler
     __request: RequestInterface
+    __router: RouterInterface
 
     def __init__(self, request_handler: BaseHTTPRequestHandler):
-        self.set_request(Request(request_handler))
         self.set_handler(request_handler)
+        self.set_request(Request(request_handler))
+        self.set_router(Router())
 
     @property
     def handler(self):
@@ -34,23 +38,19 @@ class Application:
             raise ValueError("`request` must be an instance of RequestInterface")
         self.__request = value
 
+    @property
+    def router(self):
+        return self.__router
+
+    def set_router(self, value: RouterInterface):
+        if not isinstance(value, RouterInterface):
+            raise ValueError("`router` must be an instance of RouterInterface")
+        self.__router = value
+
     def run(self):
-        self.request.set_header('Host', 'google.com')
-        print(f'Request method: {self.request.header('Host')}')
-        path = self.handler.path
-        parsed_path = urllib.parse.urlparse(path)
-        query_params = urllib.parse.parse_qs(parsed_path.query)
-        request_version = self.handler.request_version
-
-        # content_length = int(headers['Content-Length'])
-        # body = self.handler.rfile.read(content_length)
-        # content = body.decode('utf-8')
-
-        print(f'Path: {path}')
-        print(f'Request Version: {request_version}')
-        print(f'Parsed Path: {parsed_path}')
-        print(f'Query Params: {query_params}')
-        # print(f'Content: {content}')
+        from app.routes.routes import match
+        self.router.set_routes(match)
+        print(f'Router matcher {self.router.routes()}')
 
         # Send common response headers
         self.handler.send_response(200)
