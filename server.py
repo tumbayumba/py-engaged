@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from core.Application import Application
+from core.configuration.Config import Config
 
 
 # Define a request handler class

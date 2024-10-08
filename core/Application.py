@@ -1,8 +1,7 @@
-import urllib
-from cgitb import handler
 from http.server import BaseHTTPRequestHandler
-import urllib.parse
 
+from core.configuration.Config import Config
+from core.configuration.ConfigInterface import ConfigInterface
 from core.request.Request import Request
 from core.request.RequestInterface import RequestInterface
 from core.routing.Router import Router
@@ -11,14 +10,25 @@ from core.routing.RouterInterface import RouterInterface
 
 class Application:
 
+    __config: ConfigInterface
     __handler: BaseHTTPRequestHandler
     __request: RequestInterface
     __router: RouterInterface
 
     def __init__(self, request_handler: BaseHTTPRequestHandler):
+        self.set_config(Config())
         self.set_handler(request_handler)
         self.set_request(Request(request_handler))
-        self.set_router(Router())
+        self.set_router(Router(self.config.get('routes')))
+
+    @property
+    def config(self):
+        return self.__config
+
+    def set_config(self, value):
+        if not isinstance(value, ConfigInterface):
+            raise ValueError("`config` must be an instance of ConfigInterface")
+        self.__config = value
 
     @property
     def handler(self):
@@ -48,9 +58,9 @@ class Application:
         self.__router = value
 
     def run(self):
-        from app.routes.routes import match
-        self.router.set_routes(match)
-        print(f'Router matcher {self.router.routes()}')
+        # from app.routes import match
+        # self.router.set_routes(match)
+        # print(f'Router matcher {self.router.routes()}')
 
         # Send common response headers
         self.handler.send_response(200)
