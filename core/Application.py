@@ -21,6 +21,31 @@ class Application:
         self.set_request(Request(request_handler))
         self.set_router(Router(self.config.get('routes')))
 
+    def run(self):
+        self.router.parse(self.request)
+
+        # Send common response headers
+        self.handler.send_response(200)
+        self.handler.send_header('Content-type', 'application/json')
+        self.handler.end_headers()
+
+        # Handle different methods
+        match self.request.method():
+            case 'GET':
+                self.handler.wfile.write(b'Handled GET request')
+            case 'POST':
+                self.handler.wfile.write(b'Handled POST request')
+                # handler.wfile.write(f"{content}".encode('utf-8'))
+            case 'PUT':
+                self.handler.wfile.write(b'Handled PUT request')
+            case 'PATCH':
+                self.handler.wfile.write(b'Handled PATCH request')
+            case 'DELETE':
+                self.handler.wfile.write(b'Handled DELETE request')
+            case _:
+                self.handler.wfile.write(b'Unhandled HTTP method')
+
+
     @property
     def config(self):
         return self.__config
@@ -56,29 +81,3 @@ class Application:
         if not isinstance(value, RouterInterface):
             raise ValueError("`router` must be an instance of RouterInterface")
         self.__router = value
-
-    def run(self):
-        # from app.routes import match
-        # self.router.set_routes(match)
-        # print(f'Router matcher {self.router.routes()}')
-
-        # Send common response headers
-        self.handler.send_response(200)
-        self.handler.send_header('Content-type', 'application/json')
-        self.handler.end_headers()
-
-        # Handle different methods
-        match self.request.method():
-            case 'GET':
-                self.handler.wfile.write(b'Handled GET request')
-            case 'POST':
-                self.handler.wfile.write(b'Handled POST request')
-                # handler.wfile.write(f"{content}".encode('utf-8'))
-            case 'PUT':
-                self.handler.wfile.write(b'Handled PUT request')
-            case 'PATCH':
-                self.handler.wfile.write(b'Handled PATCH request')
-            case 'DELETE':
-                self.handler.wfile.write(b'Handled DELETE request')
-            case _:
-                self.handler.wfile.write(b'Unhandled HTTP method')

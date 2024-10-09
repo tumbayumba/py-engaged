@@ -6,11 +6,11 @@ from typing import Dict, Optional
 class Router(RouterInterface):
 
     __routes: Dict[str, Dict[str, str]]
-    __endpoint: str
-
+    __controller_name: str
+    __action_name: str
 
     def __init__(self, routes: Optional[Dict[str, Dict[str, str]]] = None):
-        self.__routes = routes if routes is not None else {}
+        self.set_routes(routes if routes is not None else {})
 
     def routes(self):
         return self.__routes
@@ -19,7 +19,11 @@ class Router(RouterInterface):
         self.__routes = routes
 
     def parse(self, request: RequestInterface):
-        pass
+        method = request.method()
+        url = request.url()
+        print(f'{method} {url}')
+
+
 
     def dispatch(self):
         pass

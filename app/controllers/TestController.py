@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from core.controller.Controller import Controller
 
 

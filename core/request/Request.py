@@ -27,10 +27,6 @@ class Request(RequestInterface):
         content = body.decode('utf-8')
         self.set_body(content)
 
-        print(f'Url: {self.url()}')
-        print(f'Content: {self.body()}')
-
-
     def method(self):
         return self._method
 
