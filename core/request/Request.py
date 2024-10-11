@@ -1,7 +1,8 @@
 import email
 import urllib.parse
-from http.server import BaseHTTPRequestHandler
-from typing import Dict
+from email.message import Message
+from http.server import SimpleHTTPRequestHandler
+from typing import Dict, Type
 from urllib.parse import ParseResult
 
 from core.request.RequestInterface import RequestInterface
@@ -10,22 +11,37 @@ from core.request.RequestInterface import RequestInterface
 class Request(RequestInterface):
 
     _method: str
-    _headers: email.message.Message
+    _headers: Message
     _host: str
     _url: ParseResult
     _body: str
 
-    def __init__(self, request_handler: BaseHTTPRequestHandler):
+    def __init__(self, request_handler: SimpleHTTPRequestHandler):
+        # Set the HTTP method (e.g., GET, POST, etc.)
         self.set_method(request_handler.command)
+        # Get headers from the request
         headers = request_handler.headers
         self.set_headers(headers)
+        # Set the Host header
         self.set_host(headers.get('Host'))
+        # Parse and set the requested URL
         self.set_url(urllib.parse.urlparse(request_handler.path))
-        # parse body content
-        content_length = int(headers['Content-Length'])
-        body = request_handler.rfile.read(content_length)
-        content = body.decode('utf-8')
-        self.set_body(content)
+
+        # Parse the request body content if 'Content-Length' is present
+        content_length = headers.get('Content-Length')
+        if content_length:
+            try:
+                content_length = int(content_length)
+                body = request_handler.rfile.read(content_length)
+                content = body.decode('utf-8')
+                self.set_body(content)
+            except (ValueError, TypeError) as e:
+                # Handle cases where Content-Length is invalid or parsing fails
+                print(f"Error reading body content: {e}")
+                self.set_body("")
+        else:
+            # Set empty body if Content-Length is not provided
+            self.set_body("")
 
     def method(self):
         return self._method
@@ -42,7 +58,7 @@ class Request(RequestInterface):
     def headers(self):
         return self._headers
 
-    def set_headers(self, values: email.message.Message):
+    def set_headers(self, values: Message):
         self._headers = values
 
     def header(self, key: str):

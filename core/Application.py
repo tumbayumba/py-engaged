@@ -1,4 +1,4 @@
-from http.server import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, SimpleHTTPRequestHandler
 
 from core.configuration.Config import Config
 from core.configuration.ConfigInterface import ConfigInterface
@@ -15,7 +15,7 @@ class Application:
     __request: RequestInterface
     __router: RouterInterface
 
-    def __init__(self, request_handler: BaseHTTPRequestHandler):
+    def __init__(self, request_handler: SimpleHTTPRequestHandler):
         self.set_config(Config())
         self.set_handler(request_handler)
         self.set_request(Request(request_handler))

@@ -1,6 +1,6 @@
 import email
 from abc import ABC, abstractmethod
-from typing import Dict
+from email.message import Message
 from urllib.parse import ParseResult
 
 
@@ -27,7 +27,7 @@ class RequestInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def set_headers(self, values: email.message.Message):
+    def set_headers(self, values: Message):
         raise NotImplementedError
 
     @abstractmethod
