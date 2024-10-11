@@ -22,7 +22,7 @@ class Application:
         self.set_router(Router(self.config.get('routes')))
 
     def run(self):
-        self.router.parse(self.request)
+        self.router.dispatch(self.request)
 
         # Send common response headers
         self.handler.send_response(200)
