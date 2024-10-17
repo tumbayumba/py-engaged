@@ -1,4 +1,6 @@
+import importlib
 from core.controller.Controller import Controller
+from core.errors.RouterException import RouterException
 from core.request.RequestInterface import RequestInterface
 from core.routing.RouterInterface import RouterInterface
 from typing import Dict, Optional
@@ -8,6 +10,7 @@ class Router(RouterInterface):
     __routes: Dict[str, Dict[str, str]]
     __current_route: Dict
     __endpoint: str
+    __module_name: str
     __controller_name: str
     __action_name: str
 
@@ -32,6 +35,12 @@ class Router(RouterInterface):
     def set_endpoint(self, value: str):
         self.__endpoint = value
 
+    def module(self):
+        return self.__module_name
+
+    def set_module_name(self, value: str):
+        self.__module_name = value
+
     def controller_name(self):
         return self.__controller_name
 
@@ -51,21 +60,36 @@ class Router(RouterInterface):
         routes = self.routes()
         route = routes.get(self.endpoint())
         self.set_current_route(route)
-        if route is None:
-            raise ValueError(f'No route found for {self.endpoint()}')
+        try:
+            if route is None:
+                raise RouterException(f'No route found for {self.endpoint()}')
 
-        if method != route['method']:
-            raise ValueError(f'Method {method} does not match route {self.endpoint()}')
+            if method != route['method']:
+                raise RouterException(f'Method {method} does not match route {self.endpoint()}')
 
-        controller_action = route['controller'].split('.')
-        if len(controller_action) != 2:
-            raise ValueError(f'Invalid controller action {controller_action}')
+            module_controller_action = route['controller'].rsplit('.', 2)
+            if len(module_controller_action) != 3:
+                raise RouterException(f'Invalid controller action {module_controller_action}')
 
-        self.set_controller_name(controller_action[0])
-        self.set_action_name(controller_action[1])
+            self.set_module_name(module_controller_action[0])
+            self.set_controller_name(module_controller_action[1])
+            self.set_action_name(module_controller_action[2])
+        except RouterException as e:
+            self.set_controller_name('Controller')
+            self.set_action_name('not_found')
 
 
     def dispatch(self, request: RequestInterface):
         self.parse(request)
+
+        module = importlib.import_module(self.module())
+        controller_class = getattr(module, self.controller_name())
+        # Create an instance of the controller class
+        controller_instance = controller_class()
+        # Dynamically get the method
+        method = getattr(controller_instance, self.action_name())
+
+        method()
+
 
 

@@ -6,7 +6,7 @@ from core.controller.Controller import Controller
 class TestController(Controller):
 
     def index(self):
-        pass
+        print('index')
 
     def other(self):
         pass
