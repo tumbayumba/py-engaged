@@ -37,6 +37,14 @@ class RouterInterface(ABC):
     @abstractmethod
     def set_endpoint(self, value: str):
         raise NotImplementedError
+    
+    @abstractmethod
+    def module_name(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_module_name(self, value: str):
+        raise NotImplementedError
 
     @abstractmethod
     def controller_name(self):
@@ -52,4 +60,12 @@ class RouterInterface(ABC):
 
     @abstractmethod
     def set_action_name(self, value: str):
+        raise NotImplementedError
+    
+    @abstractmethod
+    def action_args(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_action_args(self, value: Dict):
         raise NotImplementedError

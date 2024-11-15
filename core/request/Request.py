@@ -1,10 +1,9 @@
-import email
-import urllib.parse
+from core.helpers.json import Json
+from urllib.parse import urlparse, parse_qs
 from email.message import Message
 from http.server import SimpleHTTPRequestHandler
 from typing import Dict, Type
 from urllib.parse import ParseResult
-
 from core.request.RequestInterface import RequestInterface
 
 
@@ -15,33 +14,21 @@ class Request(RequestInterface):
     _host: str
     _url: ParseResult
     _body: str
+    _query_params: Dict
 
-    def __init__(self, request_handler: SimpleHTTPRequestHandler):
+    def __init__(self, request_handler):
         # Set the HTTP method (e.g., GET, POST, etc.)
-        self.set_method(request_handler.command)
+        self.set_method(request_handler["method"])
         # Get headers from the request
-        headers = request_handler.headers
+        headers = request_handler['headers']
         self.set_headers(headers)
         # Set the Host header
-        self.set_host(headers.get('Host'))
+        host_header = next((value.decode() for key, value in headers if key == b'host'), None)
+        self.set_host(host_header)
         # Parse and set the requested URL
-        self.set_url(urllib.parse.urlparse(request_handler.path))
-
-        # Parse the request body content if 'Content-Length' is present
-        content_length = headers.get('Content-Length')
-        if content_length:
-            try:
-                content_length = int(content_length)
-                body = request_handler.rfile.read(content_length)
-                content = body.decode('utf-8')
-                self.set_body(content)
-            except (ValueError, TypeError) as e:
-                # Handle cases where Content-Length is invalid or parsing fails
-                print(f"Error reading body content: {e}")
-                self.set_body("")
-        else:
-            # Set empty body if Content-Length is not provided
-            self.set_body("")
+        self.set_url(urlparse(request_handler["path"]))
+        self.set_params(parse_qs(request_handler["query_string"]))
+        self.set_body(request_handler["request_body"])
 
     def method(self):
         return self._method
@@ -74,8 +61,24 @@ class Request(RequestInterface):
         self._url = value
 
     def body(self):
-        return self._body
+        return Json.decode(self._body)
 
     def set_body(self, value: str):
         self._body = value
+
+    def params(self):
+        return self._query_params
+    
+    def param(self, name: str):
+        try:
+            return self._query_params.get(name)
+        except TypeError as e: 
+            return None
+
+    def set_params(self, data: Dict):
+        params = {key.decode(): value[0].decode() for key, value in data.items()}
+        self._query_params = params
+
+    def add_param(self, key: str, value: str):
+        self._query_params.set(key, value)
 

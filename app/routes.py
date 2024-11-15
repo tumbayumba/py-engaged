@@ -1,11 +1,18 @@
 """
 match = {
-    "/test/foo": dict(method="POST", controller="TestController.index"),
-    "/test/bar/{{id}}": dict(method="POST", controller="TestController.other")
+    "/test/foo": dict(method="GET", controller="app.controllers.test.TestController.index"),
+    "/test/bar": dict(method="POST", controller="app.controllers.test.TestController.other")
 }
 """
 
 match = {
-    "/test/foo": dict(method="POST", controller="app.controllers.TestController.TestController.index"),
-    "/test/bar/{{id}}": dict(method="POST", controller="app.controllers.TestController.TestController.other")
+    "/test/foo": dict(
+        method="GET", 
+        controller="app.controllers.test.TestController.index"
+    ),
+    "/test/bar": dict(
+        method="POST", 
+        controller="app.controllers.test.TestController.other", 
+        middleware=["app.middlewares.authenticate.Authenticate"]
+    )
 }

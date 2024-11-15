@@ -1,50 +1,29 @@
-from http.server import BaseHTTPRequestHandler, SimpleHTTPRequestHandler
-
-from core.configuration.Config import Config
 from core.configuration.ConfigInterface import ConfigInterface
-from core.request.Request import Request
 from core.request.RequestInterface import RequestInterface
-from core.routing.Router import Router
+from core.response.ResponseInterface import ResponseInterface
 from core.routing.RouterInterface import RouterInterface
 
 
 class Application:
 
+    STATUS_OK = 0
+    STATUS_FAILED = 1
+
+    __instance = None
     __config: ConfigInterface
-    __handler: BaseHTTPRequestHandler
+    __handler = None
     __request: RequestInterface
     __router: RouterInterface
+    __response: ResponseInterface
 
-    def __init__(self, request_handler: SimpleHTTPRequestHandler):
-        self.set_config(Config())
-        self.set_handler(request_handler)
-        self.set_request(Request(request_handler))
-        self.set_router(Router(self.config.get('routes')))
+    @staticmethod
+    def get_instance():
+        if Application.__instance is None:
+            Application.__instance = Application()
+        return Application.__instance
 
     def run(self):
-        self.router.dispatch(self.request)
-
-        # Send common response headers
-        self.handler.send_response(200)
-        self.handler.send_header('Content-type', 'application/json')
-        self.handler.end_headers()
-
-        # Handle different methods
-        match self.request.method():
-            case 'GET':
-                self.handler.wfile.write(b'Handled GET request')
-            case 'POST':
-                self.handler.wfile.write(b'Handled POST request')
-                # handler.wfile.write(f"{content}".encode('utf-8'))
-            case 'PUT':
-                self.handler.wfile.write(b'Handled PUT request')
-            case 'PATCH':
-                self.handler.wfile.write(b'Handled PATCH request')
-            case 'DELETE':
-                self.handler.wfile.write(b'Handled DELETE request')
-            case _:
-                self.handler.wfile.write(b'Unhandled HTTP method')
-
+        return self.router.dispatch(self.request)
 
     @property
     def config(self):
@@ -60,8 +39,6 @@ class Application:
         return self.__handler
 
     def set_handler(self, value):
-        if not isinstance(value, BaseHTTPRequestHandler):
-            raise ValueError("`handler` must be an instance of BaseHTTPRequestHandler")
         self.__handler = value
 
     @property
@@ -81,3 +58,12 @@ class Application:
         if not isinstance(value, RouterInterface):
             raise ValueError("`router` must be an instance of RouterInterface")
         self.__router = value
+
+    @property
+    def response(self):
+        return self.__response
+
+    def set_response(self, value: ResponseInterface):
+        if not isinstance(value, ResponseInterface):
+            raise ValueError("`response` must be an instance of ResponseInterface")
+        self.__response = value

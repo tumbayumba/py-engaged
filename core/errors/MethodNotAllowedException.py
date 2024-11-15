@@ -1,5 +1,5 @@
 from core.errors.ApplicationException import ApplicationException
 
 
-class RouterException(ApplicationException):
+class MethodNotAllowedException(ApplicationException):
     pass

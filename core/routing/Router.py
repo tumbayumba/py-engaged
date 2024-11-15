@@ -1,5 +1,5 @@
 import importlib
-from core.controller.Controller import Controller
+from core.errors.MethodNotAllowedException import MethodNotAllowedException
 from core.errors.RouterException import RouterException
 from core.request.RequestInterface import RequestInterface
 from core.routing.RouterInterface import RouterInterface
@@ -13,9 +13,11 @@ class Router(RouterInterface):
     __module_name: str
     __controller_name: str
     __action_name: str
+    __action_args: Dict
 
     def __init__(self, routes: Optional[Dict[str, Dict[str, str]]] = None):
         self.set_routes(routes if routes is not None else {})
+        self.set_action_args({})
 
     def routes(self):
         return self.__routes
@@ -35,7 +37,7 @@ class Router(RouterInterface):
     def set_endpoint(self, value: str):
         self.__endpoint = value
 
-    def module(self):
+    def module_name(self):
         return self.__module_name
 
     def set_module_name(self, value: str):
@@ -53,19 +55,31 @@ class Router(RouterInterface):
     def set_action_name(self, value: str):
         self.__action_name = value
 
+    def action_args(self): 
+        return self.__action_args
+
+    def set_action_args(self, arguments: Dict):
+        self.__action_args = arguments
+        
+
     def parse(self, request: RequestInterface):
         url = request.url()
         method = request.method()
         self.set_endpoint(url.path)
         routes = self.routes()
+        print(f'routes: {routes}')
         route = routes.get(self.endpoint())
+
         self.set_current_route(route)
         try:
             if route is None:
                 raise RouterException(f'No route found for {self.endpoint()}')
 
             if method != route['method']:
-                raise RouterException(f'Method {method} does not match route {self.endpoint()}')
+                raise MethodNotAllowedException(f'Method `{method}` not allowed for {self.endpoint()}')
+            
+            # if route['middleware'] != None:
+            #     print(123)
 
             module_controller_action = route['controller'].rsplit('.', 2)
             if len(module_controller_action) != 3:
@@ -74,22 +88,35 @@ class Router(RouterInterface):
             self.set_module_name(module_controller_action[0])
             self.set_controller_name(module_controller_action[1])
             self.set_action_name(module_controller_action[2])
-        except RouterException as e:
-            self.set_controller_name('Controller')
-            self.set_action_name('not_found')
+        except (RouterException, MethodNotAllowedException) as e:
+            # Map the status code based on the exception type
+            status_code = 405 if isinstance(e, MethodNotAllowedException) else 400
+            self._set_error_handler(e, status_code)
+
+
+    def _set_error_handler(self, exception, status_code):
+        """Helper method to handle route errors by setting default error action."""
+        self.set_module_name('core.controller.ErrorController')
+        self.set_controller_name('ErrorController')
+        self.set_action_name('error')
+        self.set_action_args({"message": str(exception), "http_status_code": status_code})
 
 
     def dispatch(self, request: RequestInterface):
         self.parse(request)
 
-        module = importlib.import_module(self.module())
+        module = importlib.import_module(self.module_name())
         controller_class = getattr(module, self.controller_name())
         # Create an instance of the controller class
         controller_instance = controller_class()
         # Dynamically get the method
         method = getattr(controller_instance, self.action_name())
-
-        method()
+        # Unpacking dict into function arguments
+        arguments = self.action_args()
+        if arguments:
+            return method(**arguments)
+            
+        return method()
 
 
 
