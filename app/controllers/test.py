@@ -34,11 +34,11 @@ class TestController(BaseController):
             phone = data.get("info").get("phone")
 
             return self.app.response.send(dict({
-                    "status": self.app.STATUS_OK,
-                    "data": {
-                        "info": phone
-                    }
-                }))
+                "status": self.app.STATUS_OK,
+                "data": {
+                    "info": phone
+                }
+            }))
         except Exception as e:
             self.app.response.set_status_code(400)
             return self.app.response.error(str(e))

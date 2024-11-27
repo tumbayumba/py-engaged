@@ -14,10 +14,12 @@ class Router(RouterInterface):
     __controller_name: str
     __action_name: str
     __action_args: Dict
+    __middlewares: list = []
 
     def __init__(self, routes: Optional[Dict[str, Dict[str, str]]] = None):
         self.set_routes(routes if routes is not None else {})
         self.set_action_args({})
+        self.set_middlewares([])
 
     def routes(self):
         return self.__routes
@@ -60,6 +62,15 @@ class Router(RouterInterface):
 
     def set_action_args(self, arguments: Dict):
         self.__action_args = arguments
+
+    def middlewares(self): 
+        return self.__middlewares
+
+    def set_middlewares(self, values: list):
+        self.__middlewares = values
+
+    def add_middleware(self, value: Dict):
+        self.__middlewares.append(value)
         
 
     def parse(self, request: RequestInterface):
@@ -67,7 +78,6 @@ class Router(RouterInterface):
         method = request.method()
         self.set_endpoint(url.path)
         routes = self.routes()
-        print(f'routes: {routes}')
         route = routes.get(self.endpoint())
 
         self.set_current_route(route)
@@ -78,8 +88,14 @@ class Router(RouterInterface):
             if method != route['method']:
                 raise MethodNotAllowedException(f'Method `{method}` not allowed for {self.endpoint()}')
             
-            # if route['middleware'] != None:
-            #     print(123)
+            # Handle middlewares if they exist
+            if route.get('middlewares') is not None and isinstance(route['middlewares'], list):
+                for middleware in route.get('middlewares'):
+                    middleware_module_class = middleware.rsplit('.', 1)
+                    self.add_middleware(dict(
+                        module_name=middleware_module_class[0],
+                        class_name=middleware_module_class[1],
+                    ))
 
             module_controller_action = route['controller'].rsplit('.', 2)
             if len(module_controller_action) != 3:
@@ -104,6 +120,18 @@ class Router(RouterInterface):
 
     def dispatch(self, request: RequestInterface):
         self.parse(request)
+
+        # disptach logic first to middlewares if they exist
+        middlewares = self.middlewares()
+        if len(middlewares) > 0:
+            for middleware in middlewares:
+                middleware_module = importlib.import_module(middleware['module_name'])
+                middleware_class = getattr(middleware_module, middleware['class_name'])
+                middleware_instance = middleware_class()
+                handle = getattr(middleware_instance, 'handle')
+                middleware_result = handle(request)
+                if not isinstance(middleware_result, bool):
+                    return middleware_result
 
         module = importlib.import_module(self.module_name())
         controller_class = getattr(module, self.controller_name())

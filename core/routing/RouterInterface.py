@@ -69,3 +69,15 @@ class RouterInterface(ABC):
     @abstractmethod
     def set_action_args(self, value: Dict):
         raise NotImplementedError
+    
+    @abstractmethod
+    def middlewares(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_middlewares(self, values: list):
+        raise NotImplementedError
+    
+    @abstractmethod
+    def add_middleware(self, value: Dict):
+        raise NotImplementedError

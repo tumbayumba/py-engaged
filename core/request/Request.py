@@ -49,7 +49,11 @@ class Request(RequestInterface):
         self._headers = values
 
     def header(self, key: str):
-        return self.headers().get(key)
+        key_bytes = key.encode('utf-8')  # Convert key to bytes
+        for header_key, header_value in self.headers():
+            if header_key == key_bytes:
+                return header_value.decode('utf-8')  # Convert bytes to string
+        return None  # Return None if the key is not found
 
     def set_header(self, key: str, value: str):
         self._headers[key] = value
